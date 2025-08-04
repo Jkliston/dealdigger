@@ -26,7 +26,15 @@ export default function App() {
       const items = data.ItemsResult?.Items || [];
 
       const sorted = items
-        .filter(item => item?.ItemInfo?.Title?.DisplayValue)
+        .filter(item =>
+          item?.ItemInfo?.Title?.DisplayValue &&
+          item?.DetailPageURL &&
+          (
+            item?.Images?.Primary?.Medium?.URL ||
+            item?.Images?.Primary?.Large?.URL ||
+            item?.Images?.Primary?.Small?.URL
+          )
+        )
         .sort((a, b) => {
           const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
           const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
@@ -63,19 +71,11 @@ export default function App() {
         {results.map((item, index) => {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
-
-          const url = item?.DetailPageURL
-            ? `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`
-            : null;
-
+          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
           const image =
             item?.Images?.Primary?.Medium?.URL ||
             item?.Images?.Primary?.Large?.URL ||
-            item?.Images?.Primary?.Small?.URL ||
-            null;
-
-          // 🔒 Skip rendering if there's no image or no URL
-          if (!image || !url) return null;
+            item?.Images?.Primary?.Small?.URL;
 
           return (
             <div key={index} className="card">

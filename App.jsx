@@ -24,7 +24,6 @@ export default function App() {
       console.log("Fetched data:", data);
 
       const items = data.ItemsResult?.Items || [];
-      console.log("🔍 Raw items:", items); // Debug line
 
       const sorted = items
         .filter(item => item?.ItemInfo?.Title?.DisplayValue)
@@ -63,13 +62,16 @@ export default function App() {
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
-          const image = item?.Images?.Primary?.Medium?.URL;
+          const image =
+            item?.Images?.Primary?.Medium?.URL ||
+            item?.Images?.Primary?.Large?.URL ||
+            'https://via.placeholder.com/200x200?text=No+Image';
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
           return (
             <div key={index} className="card">
-              {image && <img src={image} alt="product" />}
+              <img src={image} alt={title} />
               <h3>{title}</h3>
               {price && <p>${price}</p>}
               <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>

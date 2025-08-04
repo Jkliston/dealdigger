@@ -8,6 +8,7 @@ export default function App() {
   const [results, setResults] = useState([]);
 
   const searchAmazon = async () => {
+    console.log("Search button clicked. Query:", query);
     try {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
@@ -23,7 +24,6 @@ export default function App() {
       console.log("Fetched data:", data);
 
       const sortedResults = data.sortedResults || [];
-
       setResults(sortedResults);
     } catch (err) {
       console.error("Failed to fetch from Worker:", err);

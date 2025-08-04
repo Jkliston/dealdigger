@@ -9,31 +9,27 @@ export default function App() {
 
   const searchAmazon = async () => {
     console.log("Search button clicked. Query:", query);
-    try {
-      const response = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: query })
+    });
+
+    const data = await res.json();
+    console.log("Fetched data:", data);
+
+    const items = data.ItemsResult?.Items || [];
+
+    const sorted = items
+      .filter(item => item?.Images?.Primary?.Medium?.URL)
+      .sort((a, b) => {
+        const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+        const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+        return aPrice - bPrice;
       });
 
-      const data = await response.json();
-      console.log("Fetched data:", data);
-
-      const items = data.ItemsResult?.Items || [];
-
-      const filtered = items
-        .filter(item => item?.Images?.Primary?.Medium?.URL && item?.DetailPageURL)
-        .sort((a, b) => {
-          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          return aPrice - bPrice;
-        });
-
-      setResults(filtered);
-    } catch (err) {
-      console.error("Fetch failed:", err);
-      alert("Error fetching data from Amazon.");
-    }
+    setResults(sorted);
   };
 
   const handleKeyDown = (e) => {
@@ -46,22 +42,22 @@ export default function App() {
       <input
         type="text"
         value={query}
-        placeholder="Search Amazon products..."
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
+        placeholder="Search Amazon..."
       />
       <button onClick={searchAmazon}>Search</button>
 
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
-        {results.map((item, index) => {
-          const title = item?.ItemInfo?.Title?.DisplayValue || 'No title';
+        {results.map((item, i) => {
           const image = item?.Images?.Primary?.Medium?.URL;
+          const title = item?.ItemInfo?.Title?.DisplayValue;
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
           return (
-            <div key={index} className="card">
+            <div key={i} className="card">
               {image && <img src={image} alt={title} />}
               <h3>{title}</h3>
               {price && <p>${price}</p>}

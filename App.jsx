@@ -13,42 +13,36 @@ export default function App() {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: query })
+        body: JSON.stringify({ keyword: query }) // keyword must match Worker code
       });
 
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
 
       const data = await response.json();
       console.log("Fetched data:", data);
 
-      const items = (data?.ItemsResult?.Items || []);
+      const items = data?.ItemsResult?.Items || [];
 
-      const cleaned = items
+      const filtered = items
         .filter(item =>
           item?.ItemInfo?.Title?.DisplayValue &&
+          item?.DetailPageURL &&
           item?.Images?.Primary?.Medium?.URL &&
-          item?.DetailPageURL
+          item?.Offers?.Listings?.[0]?.Price?.Amount
         )
-        .sort((a, b) => {
-          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          return aPrice - bPrice;
-        });
+        .sort((a, b) =>
+          a.Offers.Listings[0].Price.Amount - b.Offers.Listings[0].Price.Amount
+        );
 
-      console.log("Cleaned and sorted:", cleaned);
-      setResults(cleaned);
+      setResults(filtered);
     } catch (err) {
-      console.error("Fetch error:", err);
-      alert("Something went wrong. Check console.");
+      console.error("Failed to fetch from Worker:", err);
+      alert("Something went wrong. Check the console.");
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      searchAmazon();
-    }
+    if (e.key === 'Enter') searchAmazon();
   };
 
   return (
@@ -66,26 +60,19 @@ export default function App() {
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
-          try {
-            const title = item.ItemInfo.Title.DisplayValue;
-            const image = item.Images.Primary.Medium.URL;
-            const price = item.Offers?.Listings?.[0]?.Price?.Amount;
-            const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
+          const title = item.ItemInfo.Title.DisplayValue;
+          const image = item.Images.Primary.Medium.URL;
+          const price = item.Offers.Listings[0].Price.Amount;
+          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
-            return (
-              <div key={index} className="card">
-                <img src={image} alt={title} />
-                <h3>{title}</h3>
-                {price && <p>${price.toFixed(2)}</p>}
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  View on Amazon
-                </a>
-              </div>
-            );
-          } catch (renderError) {
-            console.warn("Skipping item at index", index, "due to render error:", renderError);
-            return null;
-          }
+          return (
+            <div key={index} className="card">
+              <img src={image} alt="product" />
+              <h3>{title}</h3>
+              <p>${price}</p>
+              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
+            </div>
+          );
         })}
       </div>
     </div>

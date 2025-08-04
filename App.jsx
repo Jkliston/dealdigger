@@ -19,7 +19,7 @@ export default function App() {
     const data = await res.json();
     console.log("Fetched data:", data);
 
-    const items = data.ItemsResult?.Items || [];
+    const items = data.SearchResult?.Items || [];
 
     const sorted = items
       .filter(item => item?.Images?.Primary?.Medium?.URL)

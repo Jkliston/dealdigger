@@ -23,8 +23,16 @@ export default function App() {
       const data = await response.json();
       console.log("Fetched data:", data);
 
-      const sortedResults = data.sortedResults || [];
-      setResults(sortedResults);
+      const items = data.ItemsResult?.Items || [];
+
+      // Optional: sort by price ascending
+      const sorted = items
+        .filter(item => item?.Offers?.Listings?.[0]?.Price?.Amount)
+        .sort((a, b) =>
+          a.Offers.Listings[0].Price.Amount - b.Offers.Listings[0].Price.Amount
+        );
+
+      setResults(sorted);
     } catch (err) {
       console.error("Failed to fetch from Worker:", err);
       alert("Something went wrong. Check the console for details.");

@@ -63,21 +63,27 @@ export default function App() {
         {results.map((item, index) => {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
-          const image =
-            item?.Images?.Primary?.Medium?.URL ||
-            item?.Images?.Primary?.Large?.URL ||
-            'https://via.placeholder.com/200x200?text=No+Image';
-          const url = item?.DetailPageURL
+          const detailUrl = item?.DetailPageURL
             ? `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`
             : '#';
 
+          // Defensive image resolution
+          let image = null;
+          if (item?.Images?.Primary?.Medium?.URL) {
+            image = item.Images.Primary.Medium.URL;
+          } else if (item?.Images?.Primary?.Large?.URL) {
+            image = item.Images.Primary.Large.URL;
+          } else {
+            image = 'https://via.placeholder.com/200x200?text=No+Image';
+          }
+
           return (
             <div key={index} className="card">
-              <img src={image} alt={title} onError={(e) => e.target.src = 'https://via.placeholder.com/200x200?text=No+Image'} />
+              <img src={image} alt={title} />
               <h3>{title}</h3>
               {price && <p>${price}</p>}
-              {url !== '#' && (
-                <a href={url} target="_blank" rel="noopener noreferrer">
+              {detailUrl !== '#' && (
+                <a href={detailUrl} target="_blank" rel="noopener noreferrer">
                   View on Amazon
                 </a>
               )}

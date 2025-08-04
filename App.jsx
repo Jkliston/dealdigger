@@ -21,29 +21,23 @@ export default function App() {
 
       const items = data.ItemsResult?.Items || [];
 
-      const sorted = items
-        .filter(item =>
-          item?.ItemInfo?.Title?.DisplayValue &&
-          item?.Images?.Primary?.Medium?.URL &&
-          item?.Offers?.Listings?.[0]?.Price?.Amount
-        )
+      const filtered = items
+        .filter(item => item?.Images?.Primary?.Medium?.URL && item?.DetailPageURL)
         .sort((a, b) => {
           const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
           const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
           return aPrice - bPrice;
         });
 
-      setResults(sorted);
+      setResults(filtered);
     } catch (err) {
-      console.error("Fetch error:", err);
-      alert("Failed to load results. Check console for details.");
+      console.error("Fetch failed:", err);
+      alert("Error fetching data from Amazon.");
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      searchAmazon();
-    }
+    if (e.key === 'Enter') searchAmazon();
   };
 
   return (
@@ -61,7 +55,7 @@ export default function App() {
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
-          const title = item?.ItemInfo?.Title?.DisplayValue;
+          const title = item?.ItemInfo?.Title?.DisplayValue || 'No title';
           const image = item?.Images?.Primary?.Medium?.URL;
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
@@ -70,7 +64,7 @@ export default function App() {
             <div key={index} className="card">
               {image && <img src={image} alt={title} />}
               <h3>{title}</h3>
-              <p>${price?.toFixed(2)}</p>
+              {price && <p>${price}</p>}
               <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
             </div>
           );

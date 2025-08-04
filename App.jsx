@@ -13,7 +13,7 @@ export default function App() {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ keyword: query })
       });
 
       if (!response.ok) {
@@ -23,18 +23,10 @@ export default function App() {
       const data = await response.json();
       console.log("Fetched data:", data);
 
-      const items = data.ItemsResult?.Items || [];
+      const items = data?.ItemsResult?.Items || [];
 
       const sorted = items
-        .filter(item =>
-          item?.ItemInfo?.Title?.DisplayValue &&
-          item?.DetailPageURL &&
-          (
-            item?.Images?.Primary?.Medium?.URL ||
-            item?.Images?.Primary?.Large?.URL ||
-            item?.Images?.Primary?.Small?.URL
-          )
-        )
+        .filter(item => item?.ItemInfo?.Title?.DisplayValue && item?.DetailPageURL)
         .sort((a, b) => {
           const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
           const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
@@ -70,21 +62,16 @@ export default function App() {
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
+          const image = item?.Images?.Primary?.Medium?.URL || 'https://via.placeholder.com/150';
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
-          const image =
-            item?.Images?.Primary?.Medium?.URL ||
-            item?.Images?.Primary?.Large?.URL ||
-            item?.Images?.Primary?.Small?.URL;
 
           return (
             <div key={index} className="card">
-              <img src={image} alt={title} />
+              <img src={image} alt="product" />
               <h3>{title}</h3>
               {price && <p>${price}</p>}
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                View on Amazon
-              </a>
+              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
             </div>
           );
         })}

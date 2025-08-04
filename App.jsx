@@ -13,12 +13,8 @@ export default function App() {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: query })
+        body: JSON.stringify({ query })
       });
-
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
 
       const data = await response.json();
       console.log("Fetched data:", data);
@@ -29,18 +25,18 @@ export default function App() {
         .filter(item =>
           item?.ItemInfo?.Title?.DisplayValue &&
           item?.Images?.Primary?.Medium?.URL &&
-          item?.DetailPageURL &&
           item?.Offers?.Listings?.[0]?.Price?.Amount
         )
-        .sort((a, b) =>
-          (a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity) -
-          (b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity)
-        );
+        .sort((a, b) => {
+          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          return aPrice - bPrice;
+        });
 
       setResults(sorted);
     } catch (err) {
-      console.error("Failed to fetch from Worker:", err);
-      alert("Something went wrong. Check the console for details.");
+      console.error("Fetch error:", err);
+      alert("Failed to load results. Check console for details.");
     }
   };
 
@@ -65,16 +61,16 @@ export default function App() {
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
-          const title = item.ItemInfo.Title.DisplayValue;
-          const image = item.Images.Primary.Medium.URL;
-          const price = item.Offers.Listings[0].Price.Amount;
+          const title = item?.ItemInfo?.Title?.DisplayValue;
+          const image = item?.Images?.Primary?.Medium?.URL;
+          const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
           return (
             <div key={index} className="card">
-              <img src={image} alt={title} />
+              {image && <img src={image} alt={title} />}
               <h3>{title}</h3>
-              <p>${price}</p>
+              <p>${price?.toFixed(2)}</p>
               <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
             </div>
           );

@@ -1,22 +1,41 @@
 import React, { useState } from 'react';
 
 const WORKER_URL = 'https://proud-bread-1784.joshuakliston.workers.dev/';
-const AFFILIATE_TAG = 'vibestrom-20';
+const AFFILIATE_TAG = 'joshuakliston-20';
 
 export default function App() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
 
   const searchAmazon = async () => {
-    const response = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    });
+    console.log("Search button clicked. Query:", query);
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
 
-    const { sortedResults } = await response.json();
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
 
-    setResults(sortedResults || []);
+      const data = await response.json();
+      console.log("Fetched data:", data);
+
+      const items = data.ItemsResult?.Items || [];
+
+      const sorted = items
+        .filter(item => item?.Offers?.Listings?.[0]?.Price?.Amount)
+        .sort((a, b) =>
+          a.Offers.Listings[0].Price.Amount - b.Offers.Listings[0].Price.Amount
+        );
+
+      setResults(sorted);
+    } catch (err) {
+      console.error("Failed to fetch from Worker:", err);
+      alert("Something went wrong. Check the console for details.");
+    }
   };
 
   return (
@@ -33,7 +52,7 @@ export default function App() {
       <div className="results">
         {results.map((item, index) => (
           <div key={index} className="card">
-            <img src={item.Images.Primary.Large.URL} alt="product" />
+            <img src={item.Images.Primary.Medium.URL} alt="product" />
             <h3>{item.ItemInfo.Title.DisplayValue}</h3>
             <p>${item.Offers.Listings[0].Price.Amount}</p>
             <a

@@ -62,19 +62,27 @@ export default function App() {
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
+
           const image =
-            item?.Images?.Primary?.Medium?.URL ||
-            item?.Images?.Primary?.Large?.URL ||
+            item?.Images?.Primary?.Medium?.URL ??
+            item?.Images?.Primary?.Large?.URL ??
             'https://via.placeholder.com/200x200?text=No+Image';
+
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
-          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
+          const url = item?.DetailPageURL
+            ? `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`
+            : '#';
 
           return (
             <div key={index} className="card">
               <img src={image} alt={title} />
               <h3>{title}</h3>
               {price && <p>${price}</p>}
-              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
+              {url !== '#' && (
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  View on Amazon
+                </a>
+              )}
             </div>
           );
         })}

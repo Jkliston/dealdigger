@@ -8,15 +8,27 @@ export default function App() {
   const [results, setResults] = useState([]);
 
   const searchAmazon = async () => {
-    const response = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    });
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
 
-    const { sortedResults } = await response.json();
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
 
-    setResults(sortedResults || []);
+      const data = await response.json();
+      console.log("Fetched data:", data);
+
+      const sortedResults = data.sortedResults || [];
+
+      setResults(sortedResults);
+    } catch (err) {
+      console.error("Failed to fetch from Worker:", err);
+      alert("Something went wrong. Check the console for details.");
+    }
   };
 
   return (

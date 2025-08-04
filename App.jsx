@@ -13,36 +13,41 @@ export default function App() {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: query }) // keyword must match Worker code
+        body: JSON.stringify({ keyword: query }) // <-- FIXED KEY
       });
 
-      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
 
       const data = await response.json();
       console.log("Fetched data:", data);
 
-      const items = data?.ItemsResult?.Items || [];
+      const items = data.ItemsResult?.Items || [];
 
-      const filtered = items
+      const sorted = items
         .filter(item =>
           item?.ItemInfo?.Title?.DisplayValue &&
-          item?.DetailPageURL &&
           item?.Images?.Primary?.Medium?.URL &&
           item?.Offers?.Listings?.[0]?.Price?.Amount
         )
-        .sort((a, b) =>
-          a.Offers.Listings[0].Price.Amount - b.Offers.Listings[0].Price.Amount
-        );
+        .sort((a, b) => {
+          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          return aPrice - bPrice;
+        });
 
-      setResults(filtered);
+      setResults(sorted);
     } catch (err) {
       console.error("Failed to fetch from Worker:", err);
-      alert("Something went wrong. Check the console.");
+      alert("Something went wrong. Check the console for details.");
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') searchAmazon();
+    if (e.key === 'Enter') {
+      searchAmazon();
+    }
   };
 
   return (
@@ -60,17 +65,19 @@ export default function App() {
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
-          const title = item.ItemInfo.Title.DisplayValue;
-          const image = item.Images.Primary.Medium.URL;
-          const price = item.Offers.Listings[0].Price.Amount;
+          const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
+          const image = item?.Images?.Primary?.Medium?.URL;
+          const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
           const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
           return (
             <div key={index} className="card">
-              <img src={image} alt="product" />
+              <img src={image} alt={title} />
               <h3>{title}</h3>
               <p>${price}</p>
-              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                View on Amazon
+              </a>
             </div>
           );
         })}

@@ -64,14 +64,16 @@ export default function App() {
           const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
           const image = item?.Images?.Primary?.Medium?.URL || 'https://via.placeholder.com/150';
           const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
-          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
+          const url = item?.DetailPageURL ? `${item.DetailPageURL}?tag=${AFFILIATE_TAG}` : '#';
 
           return (
             <div key={index} className="card">
-              <img src={image} alt="product" />
+              <img src={image} alt={title} />
               <h3>{title}</h3>
-              {price && <p>${price}</p>}
-              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
+              {price && <p>${price.toFixed(2)}</p>}
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                View on Amazon
+              </a>
             </div>
           );
         })}

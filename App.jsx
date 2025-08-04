@@ -23,28 +23,71 @@ export default function App() {
       const data = await response.json();
       console.log("Fetched data:", data);
 
-      const items = (data?.ItemsResult?.Items || []).filter(item => {
-        const title = item?.ItemInfo?.Title?.DisplayValue;
-        const image = item?.Images?.Primary?.Medium?.URL;
-        const url = item?.DetailPageURL;
-        if (!title || !image || !url) {
-          console.warn("Skipping invalid item:", item);
-          return false;
-        }
-        return true;
-      });
+      const items = (data?.ItemsResult?.Items || []);
 
-      const sorted = items.sort((a, b) => {
-        const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-        const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-        return aPrice - bPrice;
-      });
+      const cleaned = items
+        .filter(item =>
+          item?.ItemInfo?.Title?.DisplayValue &&
+          item?.Images?.Primary?.Medium?.URL &&
+          item?.DetailPageURL
+        )
+        .sort((a, b) => {
+          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          return aPrice - bPrice;
+        });
 
-      setResults(sorted);
+      console.log("Cleaned and sorted:", cleaned);
+      setResults(cleaned);
     } catch (err) {
       console.error("Fetch error:", err);
-      alert("Something went wrong. Check the console.");
+      alert("Something went wrong. Check console.");
     }
   };
 
-  const handleKeyDown = (e
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      searchAmazon();
+    }
+  };
+
+  return (
+    <div className="container">
+      <h1>DealDigger 🔍</h1>
+      <input
+        type="text"
+        value={query}
+        placeholder="Search Amazon products..."
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+      <button onClick={searchAmazon}>Search</button>
+
+      <div className="results">
+        {results.length === 0 && <p>No results found.</p>}
+        {results.map((item, index) => {
+          try {
+            const title = item.ItemInfo.Title.DisplayValue;
+            const image = item.Images.Primary.Medium.URL;
+            const price = item.Offers?.Listings?.[0]?.Price?.Amount;
+            const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
+
+            return (
+              <div key={index} className="card">
+                <img src={image} alt={title} />
+                <h3>{title}</h3>
+                {price && <p>${price.toFixed(2)}</p>}
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  View on Amazon
+                </a>
+              </div>
+            );
+          } catch (renderError) {
+            console.warn("Skipping item at index", index, "due to render error:", renderError);
+            return null;
+          }
+        })}
+      </div>
+    </div>
+  );
+}

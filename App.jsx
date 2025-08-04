@@ -24,17 +24,26 @@ export default function App() {
       console.log("Fetched data:", data);
 
       const items = data.ItemsResult?.Items || [];
+      console.log("🔍 Raw items:", items); // Debug line
 
       const sorted = items
-        .filter(item => item?.Offers?.Listings?.[0]?.Price?.Amount)
-        .sort((a, b) =>
-          a.Offers.Listings[0].Price.Amount - b.Offers.Listings[0].Price.Amount
-        );
+        .filter(item => item?.ItemInfo?.Title?.DisplayValue)
+        .sort((a, b) => {
+          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+          return aPrice - bPrice;
+        });
 
       setResults(sorted);
     } catch (err) {
       console.error("Failed to fetch from Worker:", err);
       alert("Something went wrong. Check the console for details.");
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      searchAmazon();
     }
   };
 
@@ -46,24 +55,27 @@ export default function App() {
         value={query}
         placeholder="Search Amazon products..."
         onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
       />
       <button onClick={searchAmazon}>Search</button>
 
       <div className="results">
-        {results.map((item, index) => (
-          <div key={index} className="card">
-            <img src={item.Images.Primary.Medium.URL} alt="product" />
-            <h3>{item.ItemInfo.Title.DisplayValue}</h3>
-            <p>${item.Offers.Listings[0].Price.Amount}</p>
-            <a
-              href={`${item.DetailPageURL}?tag=${AFFILIATE_TAG}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View on Amazon
-            </a>
-          </div>
-        ))}
+        {results.length === 0 && <p>No results found.</p>}
+        {results.map((item, index) => {
+          const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
+          const image = item?.Images?.Primary?.Medium?.URL;
+          const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
+          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
+
+          return (
+            <div key={index} className="card">
+              {image && <img src={image} alt="product" />}
+              <h3>{title}</h3>
+              {price && <p>${price}</p>}
+              <a href={url} target="_blank" rel="noopener noreferrer">View on Amazon</a>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

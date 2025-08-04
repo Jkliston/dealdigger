@@ -25,13 +25,20 @@ export default function App() {
 
       const items = data?.ItemsResult?.Items || [];
 
-      const sorted = items
-        .filter(item => item?.ItemInfo?.Title?.DisplayValue && item?.DetailPageURL)
-        .sort((a, b) => {
-          const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
-          return aPrice - bPrice;
-        });
+      const filtered = items.filter(item => {
+        const hasURL = !!item?.DetailPageURL;
+        const hasTitle = !!item?.ItemInfo?.Title?.DisplayValue;
+        const hasImage = !!item?.Images?.Primary?.Medium?.URL;
+        const ok = hasURL && hasTitle && hasImage;
+        if (!ok) console.warn("Skipping incomplete item:", item);
+        return ok;
+      });
+
+      const sorted = filtered.sort((a, b) => {
+        const aPrice = a?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+        const bPrice = b?.Offers?.Listings?.[0]?.Price?.Amount || Infinity;
+        return aPrice - bPrice;
+      });
 
       setResults(sorted);
     } catch (err) {
@@ -61,10 +68,10 @@ export default function App() {
       <div className="results">
         {results.length === 0 && <p>No results found.</p>}
         {results.map((item, index) => {
-          const title = item?.ItemInfo?.Title?.DisplayValue || 'Untitled';
-          const image = item?.Images?.Primary?.Medium?.URL || 'https://via.placeholder.com/150';
-          const price = item?.Offers?.Listings?.[0]?.Price?.Amount;
-          const url = item?.DetailPageURL ? `${item.DetailPageURL}?tag=${AFFILIATE_TAG}` : '#';
+          const title = item.ItemInfo.Title.DisplayValue;
+          const image = item.Images.Primary.Medium.URL;
+          const price = item.Offers?.Listings?.[0]?.Price?.Amount;
+          const url = `${item.DetailPageURL}?tag=${AFFILIATE_TAG}`;
 
           return (
             <div key={index} className="card">
